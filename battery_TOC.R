@@ -3,7 +3,6 @@ if (!require("pacman")) install.packages("pacman")
 
 pacman::p_load(
   tidyverse,
-  readxl,
   highcharter,
   here,
   directlabels,
@@ -33,10 +32,10 @@ data_forklift <- read_excel(
 # tidy and prepare the data
 
 data_backup <- data_backup %>%
-  select(
-    -14,
-    -15
-  ) %>%
+  # select(
+  #   -14,
+  #   -15
+  # ) %>%
   rename(
     Years.Initial = 1,
     Years.Prolonged = 2,
@@ -46,6 +45,11 @@ data_backup <- data_backup %>%
     Regeneration.Costs = 6,
     Savings.Lifetime = 13
   ) %>%
+  mutate(
+    Years.Prolonged = as.character(Years.Prolonged),
+    Regeneration.Costs = Regeneration.Costs * 100,
+    #Regeneration.Costs = paste(Regeneration.Costs * 100, "%", sep = "")
+  ) %>%
   write_csv(here("data", "battery_TOC_backup.csv"))
 
 
@@ -54,8 +58,8 @@ ggplot(data_backup,
        ) +
   geom_point(
     aes(
-      color = Years.Prolonged,
-      size = Life.Total
+      color = Years.Prolonged, # color
+      size = Life.Total # size
       )
     ) +
   geom_line(
@@ -65,6 +69,18 @@ ggplot(data_backup,
       color = Years.Prolonged
       )
     ) +
+  geom_mark_ellipse(
+    aes(
+     # fill = Savings.Lifetime,
+      filter = (Years.Initial == 7 & Years.Prolonged == 3) | (filter = Years.Initial == 7 & Years.Prolonged == 4),
+      label = "Expected alternative"
+      ),
+    label.fontsize = 8,
+    color = "orange",
+    fill = "orange",
+    alpha = 0.75,
+    expand = unit(3, "mm")
+  ) +
   scale_x_continuous(
     limits = c(5, NA)
   ) +
@@ -80,9 +96,101 @@ ggplot(data_backup,
     #nudge_x = 0.40,
     size = 3
   ) +
-  facet_wrap(~Regeneration.Costs) +
+  facet_wrap(
+    ~Regeneration.Costs,
+    ncol = 2,
+    scales = "free_y"
+   ) +
   theme_light() +
-  #geom_dl(aes(label = Years.Prolonged), method = "last.points", cex = 0.8) +
+  labs(
+   # x = "sdsd",
+  #  y = "fddfdfd"
+  )
+
+  ggsave(
+    here("output", "backup_batteries.png"),
+    # width = 2000,
+    # height = 2500,
+    # units = c("px")
+  )
+
+
+
+
+
+
+ggplot(data_backup,
+       aes(x = Years.Prolonged, y =  Savings.Lifetime, group = Regeneration.Costs)
+) +
+  geom_point(
+    aes(
+      color = Years.Initial, # color
+      size = Life.Total # size
+    )
+  ) +
+  # geom_mark_ellipse(
+  #   aes(
+  #     # fill = Savings.Lifetime,
+  #     filter = (Years.Initial == 7 & Years.Prolonged == 3) | (filter = Years.Initial == 7 & Years.Prolonged == 4),
+  #     label = "Expected alternative"
+  #   ),
+  #   label.fontsize = 8,
+  #   color = "orange",
+  #   fill = "orange",
+  #   alpha = 0.75,
+  #   expand = unit(3, "mm")
+  # ) +
+  # scale_x_continuous(
+  #   limits = c(5, NA)
+  # ) +
+  geom_text(
+    aes(
+      label = Years.Prolonged,
+      x = Years.Initial + 0.40
+    ),
+    # color = "white",
+    # fill = "orange",
+    fontface = "bold",
+    data = data_backup %>% filter(Years.Initial == max(Years.Initial)),
+    #nudge_x = 0.40,
+    size = 3
+  ) +
+  # facet_wrap(
+  #   ~Regeneration.Costs,
+  #   ncol = 2,
+  #   scales = "free_y"
+  # ) +
+  theme_light() +
+  labs(
+    # x = "sdsd",
+    #  y = "fddfdfd"
+  ) +
+  geom_jitter()
+
+
+
+
+
+
+
+
+
+
+
+
+
+#geom_dl(aes(label = Years.Prolonged), method = "last.points", cex = 0.8) +
+  geom_text(
+    aes(
+      x = 10,
+      y = 100
+      ),
+    label = "Yers\n prolonged",
+   # data = data_backup %>% filter(Years.Initial == max(Years.Initial) & Savings.Lifetime == max(Savings.Lifetime)),
+    size = 3
+    )
+
+
   annotate(
     "text",
     x = 10,
@@ -124,3 +232,16 @@ ggplot(data = test) +
   )
 
 
+
+
+
+
+path <- read_excel(
+  here("data", "battery_total_ownership_costs.xlsx")
+) %>%
+  excel_sheets() %>%
+  set_names() %>%
+  map(read_excel, path = path)
+
+sheets <- excel_sheets(here("data", "battery_total_ownership_costs.xlsx"))
+sheets
