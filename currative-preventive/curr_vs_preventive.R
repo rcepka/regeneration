@@ -13,8 +13,19 @@ pacman::p_load(
   ggforce
 )
 
+
+
+# ******************************************************************************
+# ******************************************************************************
+# Preventive regeneration chart
+# ******************************************************************************
+# ******************************************************************************
+
+
+# Load basic data
 df <- read_sheet(
   "https://docs.google.com/spreadsheets/d/1OQSABH5vFd6GjAXIxo3FRCiZOnnETrOzJh3apjAQ8xY",
+  sheet = "preventive",
   skip = 1
   ) %>%
   rename(
@@ -39,8 +50,12 @@ df <- read_sheet(
    # Year = as.factor(Year)
   )
 
+# Save it as csv
+write_csv(df, here("currative-preventive", "data", "df.csv"))
 
 
+# Plot the basic df
+# Each column has own geom_area
 ggplot(
   data = df,
   aes(x = Year)
@@ -142,39 +157,22 @@ ggplot(
     size = 0.5,
     alpha = 0.75
   ) +
-  theme_ipsum(grid = "Y")# +
-  geom_text(
-    data = dfl,
-    aes(
-      x = Year,
-      y = Capacity,
-      label = group_by(Year),
-      summarise() mutateCapacity
-    )
-
-  )
+  theme_ipsum(grid = "Y")
 
 
 
 
-
-
+# Create data for automatic plotting of each column
 dfl <- pivot_longer(
   df,
   cols = c(2, starts_with("Reg")),
   names_to = "Regeneration",
   values_to = "Capacity"
-) %>%
-  mutate(
-    #Year = as.factor(Year),
-    #Regeneration = as.factor(Regeneration)
-  )
+)
+# Save it as csv
+write_csv(dfl, here("currative-preventive", "data", "dfl.csv"))
 
-dfl$Regeneration <- factor(dfl$Regeneration, levels = c(
-  "No.Regeneration", "Regeneration.1", "Regeneration.2", "Regeneration.3", "Regeneration.4",
-  "Regeneration.5", "Regeneration.6", "Regeneration.7", "Regeneration.8")
-  )
-
+# Create data frame for printing labels - how much capacity battery has
 labels <- dfl %>%
   mutate(
     Year = floor(Year)
@@ -183,22 +181,20 @@ labels <- dfl %>%
   group_by(Year) %>%
   summarise(Capacity = max(Capacity, na.rm = TRUE ))
 
-
+# Create colors scale for scale_color_manual()
 colors <- c(
-  # "#d90368", "#25382d", "#344e41", "#46684c", "#658e64", "#b2ceb3", "#152219", "#25382d", "#344e41"
   "#0000a3", "#002800", "#004900", "#006a00", "#008a00", "#00ab00", "#00cc00", "#00ec00", "#0eff0e"
   )
 
-
+# Create alpha levels for scale_alpha()
 alphas <- c("#0.9", paste("#", seq(0.7, 0.35, by=-0.05), sep = ""))
 
+# Guide labels
+guide_labels = c("WITHOUT", "FIRST", "SECOND", "THIRD", "FOURTH", "FIFTH", "SIXTH", "SEVENTH", "EIGHT")
 
 
-
-
-
-
-ggplot(
+# Plot the chart
+preventive_basic <- ggplot(
   data = dfl,
   aes(
     x = Year,
@@ -217,51 +213,84 @@ ggplot(
   scale_x_continuous(
     limits = c(0, 17),
     breaks = breaks_width(2),
+    "Years of battery use"
     ) +
   scale_y_continuous(
     limits = c(0, 100),
     breaks = c(0, 50, 75, 100),
-    #labels = paste(Capacity, "%")
+    "Battery capacity [%]"
   ) +
   geom_hline(
     yintercept = 75,
     color = "red",
-    size = 0.5,
+    size = 0.75,
     alpha = 0.75
   ) +
-  # geom_text(
-  #   data = labels,
-  #   aes(
-  #     x = Year,
-  #     y = Capacity,
-  #     label = Capacity,
-  #     ),
-  #   nudge_y = 10
-  #   ) +
   scale_color_manual(
-    values = colors
+    values = colors,
+    #labels = guide_labels,
+    guide = FALSE,
   ) +
   scale_fill_manual(
-    values = colors
+    values = colors,
+    labels = guide_labels,
   ) +
   scale_alpha_manual(
     values = alphas,
     #guide=F
     ) +
+  theme_ipsum_rc(
+    grid = "Y",
+    axis_title_size = 13
+    ) +
+  theme(
+      legend.title = element_text(face = "bold"),
+      legend.text = element_text(face = "bold")
+    )
+
+# Save it
+ggsave(
+  plot = preventive_basic,
+  here("currative-preventive", "output", "preventive_basic.png"),
+  dpi = 300,
+  width = 2250, height = 1000, units = "px"
+  )
+
+
+# Add titles and description
+preventive_with_titles <- preventive_basic +
   labs(
     x = "Years of battery life",
     y = "Battery capacity",
     title = "Preventive regeneration",
     subtitle = "Regeneration as a battery maintenance operation"
-  ) +
-  theme_ipsum(
-    grid = "Y"
-    ) +
-  ggsave(
+  ) #+
+    # geom_text(
+    #   data = labels,
+    #   aes(
+    #     x = Year,
+    #     y = Capacity,
+    #     label = Capacity,
+    #     ),
+    #   nudge_y = 10
+    #   ) +
 
-  )
+
+# Save it
+ggsave(
+  plot = preventive_with_titles,
+  here("currative-preventive", "output", "preventive_with_titles.png"),
+  dpi = 300,
+  width = 2250, height = 1000, units = "px"
+)
 
 
+
+
+
+# ******************************************************************************
+# Currative
+# ******************************************************************************
 
 
 
