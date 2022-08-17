@@ -17,6 +17,150 @@ pacman::p_load(
 
 # ******************************************************************************
 # ******************************************************************************
+# WITHOUT regeneration
+# - assuming degradation after 7 years
+# ******************************************************************************
+# ******************************************************************************
+
+
+# Load basic data for backup batteries
+df_no_regeneration_BB <- read_sheet(
+  "https://docs.google.com/spreadsheets/d/1OQSABH5vFd6GjAXIxo3FRCiZOnnETrOzJh3apjAQ8xY",
+  sheet = "no_regeneration-BB",
+  range = "A2:D67",
+  #skip = 1
+)
+
+
+# Save it as csv
+write_csv(df_no_regeneration_BB, here("currative-preventive", "data", "df_no_regeneration_BB.csv"))
+
+
+
+dfl_no_regeneration_BB <- pivot_longer(
+  df_no_regeneration_BB,
+    !Year,
+    names_to = "Batteries",
+    values_to = "Capacity"
+  )
+
+
+plot_no_regneration_BB <- ggplot(
+  data = dfl_no_regeneration_BB,
+  aes(
+    x = Year,
+    y = Capacity
+    )
+  ) +
+  geom_area(
+    aes(
+      color = Batteries,
+      fill = Batteries
+    ),
+    size = 1,
+    alpha = 0.5,
+    position = "dodge",
+  ) +
+    scale_x_continuous(
+      limits = c(0, 16),
+      breaks = c(0:16),
+      "Years of battery use"
+    ) +
+    scale_y_continuous(
+      limits = c(0, 100),
+      breaks = c(0, 50, 75, 100),
+      "Battery capacity [%]"
+    ) +
+  theme_ipsum_rc(
+    grid = "Y",
+    axis_title_size = 13
+  ) +
+  theme(
+    legend.title = element_text(face = "bold"),
+    legend.text = element_text(face = "bold")
+  ) +
+    geom_hline(
+      yintercept = 75,
+      color = "darkgoldenrod",
+      size = 0.75,
+      alpha = 0.95
+    ) +
+    geom_vline(
+      xintercept = 10,
+      color = "darkorange",
+      size = 1,
+      alpha = 0.75
+    ) +
+    annotate(
+      "label",
+      x = 10.5, y = 100,
+      label = "Designed lifespan",
+      size = 4,
+      hjust = 0.065,
+      fill = "orange",
+      color = "white",
+      fontface = "bold",
+      alpha = 0.7
+    ) +
+    scale_color_manual(
+      values = c("dodgerblue4", "dodgerblue3", "dodgerblue2"),
+      #labels = guide_labels_preventive_BB,
+      guide = FALSE,
+    ) +
+    scale_fill_manual(
+      values = c("dodgerblue4", "dodgerblue3", "dodgerblue2"),
+     # labels = c("red", "orange"),
+    )
+
+
+plot_no_regneration_BB <- plot_no_regneration_BB +
+   geom_point(
+    aes(x = a, y = b),
+    data = data.frame(a = c(7, 14), b = c(75, 75)),
+    size = 5,
+    color = "red"
+    ) +
+  annotate(
+    geom = "segment",
+    #data = data.frame(a = c(7, 6), b = c(7, 5), d = c(75, 75), d = c(50, 50)),
+    x = 7, xend = 6, y = 75, yend = 50,
+    #x = mydata$a, xend = mydata$b, y = mydata$c, yend = mydata$d,
+    #x = a, xend = b, y = c, yend = d,
+    color = "red",
+    size = 0.5,
+    #arrow = arrow(length = unit(3, "mm"))
+    ) +
+  annotate(
+    geom = "segment",
+    x = 14, xend = 6, y = 75, yend = 50,
+    #x = mydata$a, xend = mydata$b, y = mydata$c, yend = mydata$d,
+    #x = a, xend = b, y = c, yend = d,
+    color = "red",
+    size = 0.5,
+    #arrow = arrow(length = unit(3, "mm"))
+  ) +
+  geom_label(
+    aes(x = 6, y = 50,),
+    fill = "red",
+    color = "white",
+    label = "Points of battery\nearly replacement",
+    nudge_x = -1.5,
+    nudge_y = -7
+  )
+
+
+# Save it
+  ggsave(
+    plot = plot_no_regneration_BB,
+    here("currative-preventive", "output", "no_regeneration_BB.png"),
+    dpi = 300,
+    width = 2250, height = 1000, units = "px"
+  )
+
+
+
+# ******************************************************************************
+# ******************************************************************************
 # Preventive regeneration chart
 # ******************************************************************************
 # ******************************************************************************
@@ -223,9 +367,9 @@ preventive_basic_BB <- ggplot(
   ) +
   geom_hline(
     yintercept = 75,
-    color = "red",
+    color = "darkgoldenrod",
     size = 0.75,
-    alpha = 0.75
+    alpha = 0.95
   ) +
     geom_vline(
       xintercept = 10,
@@ -408,7 +552,7 @@ currative_basic_BB <- ggplot(
   ) +
   geom_hline(
     yintercept = 75,
-    color = "red",
+    color = "darkgoldenrod",
     size = 0.75,
     alpha = 0.75
     ) +
@@ -416,7 +560,7 @@ currative_basic_BB <- ggplot(
       xintercept = 10,
       color = "darkorange",
       size = 1,
-      alpha = 0.75
+      alpha = 0.95
       ) +
     annotate(
       "label",
